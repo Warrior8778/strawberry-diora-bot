@@ -84,9 +84,17 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^📅 Брони$"), admin_bookings))
     app.add_handler(MessageHandler(filters.Regex("^✅ Задачи$"), admin_tasks))
 
-    # Callbacks каталога и корзины
-    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^(cat_|item_|add_|back_to_cats)"))
-    app.add_handler(CallbackQueryHandler(cart_callback, pattern="^(show_cart|clear_cart|checkout|confirm_order)"))
+    # Callbacks каталога — каждый паттерн отдельно
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^cat_"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^item_"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^add_"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^back_to_cats$"))
+
+    # Callbacks корзины
+    app.add_handler(CallbackQueryHandler(cart_callback, pattern="^show_cart$"))
+    app.add_handler(CallbackQueryHandler(cart_callback, pattern="^clear_cart$"))
+    app.add_handler(CallbackQueryHandler(cart_callback, pattern="^checkout$"))
+    app.add_handler(CallbackQueryHandler(cart_callback, pattern="^confirm_order$"))
 
     # Callbacks админа
     app.add_handler(CallbackQueryHandler(order_callback, pattern="^order_"))
