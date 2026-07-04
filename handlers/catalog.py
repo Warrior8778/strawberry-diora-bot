@@ -119,11 +119,11 @@ async def show_cart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text, keyboard = _build_cart_message(cart)
 
     if update.message:
-        await update.message.reply_text(text, parse_mode="MarkdownV2", reply_markup=keyboard)
+        await update.message.reply_text(text, reply_markup=keyboard)
     else:
         query = update.callback_query
         await query.answer()
-        await query.edit_message_text(text, parse_mode="MarkdownV2", reply_markup=keyboard)
+        await query.edit_message_text(text, reply_markup=keyboard)
 
 
 async def cart_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -134,7 +134,7 @@ async def cart_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "show_cart":
         cart = context.user_data.get("cart", {})
         text, keyboard = _build_cart_message(cart)
-        await query.edit_message_text(text, parse_mode="MarkdownV2", reply_markup=keyboard)
+        await query.edit_message_text(text, reply_markup=keyboard)
 
     elif data == "clear_cart":
         context.user_data["cart"] = {}
