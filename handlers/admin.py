@@ -29,7 +29,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "🛠 *Панель администратора — Strawberry_Diora* 🍓\n\nВыберите раздел:",
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
         reply_markup=admin_menu_keyboard()
     )
 
@@ -45,7 +45,7 @@ async def admin_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Новых заказов нет!")
         return
 
-    await update.message.reply_text(f"📋 *Новые заказы ({len(orders)}):*", parse_mode="Markdown")
+    await update.message.reply_text(f"📋 *Новые заказы ({len(orders)}):*", parse_mode="MarkdownV2")
 
     for order in orders[:10]:  # Максимум 10 за раз
         await update.message.reply_text(
@@ -53,7 +53,7 @@ async def admin_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📝 {order['description']}\n"
             f"📍 {order['address']}\n"
             f"🕐 {order['created_at'][:16]}",
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
             reply_markup=order_status_keyboard(order["id"])
         )
 
@@ -71,7 +71,7 @@ async def admin_bookings(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"📅 *Ожидающие бронирования ({len(bookings)}):*",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
 
     for b in bookings:
@@ -82,7 +82,7 @@ async def admin_bookings(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📆 {b['date']} в {b['time']}\n"
             f"👥 {b['persons']} чел.\n"
             f"💬 {b['comment'] or 'нет'}",
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
             reply_markup=booking_action_keyboard(b["id"])
         )
 
@@ -102,7 +102,7 @@ async def admin_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"✅ *Открытые задачи ({len(tasks)}):*",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
 
     for task in tasks:
@@ -112,7 +112,7 @@ async def admin_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📌 {task['title']}\n"
             f"📝 {task['description']}\n"
             f"🕐 {task['created_at'][:16]}",
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
             reply_markup=task_done_keyboard(task["id"])
         )
 
@@ -123,7 +123,7 @@ async def create_task_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "📝 *Создание задачи*\n\nВведите название задачи:",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
     return TASK_TITLE
 
@@ -138,7 +138,7 @@ async def task_get_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["task_desc"] = update.message.text
     await update.message.reply_text(
         "🎯 Приоритет:\nВведите: *высокий*, *обычный* или *низкий*",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
     return TASK_PRIORITY
 
@@ -161,7 +161,7 @@ async def task_get_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"✅ *Задача #{task_id} создана!*\n"
         f"📌 {context.user_data['task_title']}",
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
         reply_markup=admin_menu_keyboard()
     )
     return ConversationHandler.END
@@ -201,7 +201,7 @@ async def order_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     label = status_labels.get(new_status, new_status)
     await query.edit_message_text(
         f"{query.message.text}\n\n🔄 Статус обновлён: *{label}*",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
 
 
@@ -222,13 +222,13 @@ async def booking_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update_booking_status(booking_id, "confirmed")
         await query.edit_message_text(
             f"{query.message.text}\n\n✅ *Бронирование подтверждено!*",
-            parse_mode="Markdown"
+            parse_mode="MarkdownV2"
         )
     elif action == "reject":
         await update_booking_status(booking_id, "rejected")
         await query.edit_message_text(
             f"{query.message.text}\n\n❌ *Бронирование отклонено.*",
-            parse_mode="Markdown"
+            parse_mode="MarkdownV2"
         )
 
 
@@ -244,5 +244,5 @@ async def task_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await close_task(task_id)
     await query.edit_message_text(
         f"{query.message.text}\n\n✔️ *Задача выполнена!*",
-        parse_mode="Markdown"
+        parse_mode="MarkdownV2"
     )
