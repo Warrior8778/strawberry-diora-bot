@@ -12,34 +12,32 @@ SETS = [
         "name": "Diora XS",
         "desc": "4 клубники в шоколаде",
         "price": 140,
-        "photo": None,
+        "photo": "AgACAgIAAxkBAANyakpXr3QyVTtwTCYxDoczTiUYzB8AAjQZaxvS_FFKjOiugMc9P7ABAAMCAAN5AAM8BA",
     },
     {
         "id": "set_s",
         "name": "Diora S",
         "desc": "12-15 клубник в шоколаде",
         "price": 420,
-        "photo": None,
+        "photo": "AgACAgIAAxkBAANuakpXZqe1d0CeipnQYlicJP1py8oAAjIZaxvS_FFKfa3PTvP8hEoBAAMCAAN5AAM8BA",
     },
     {
         "id": "set_m",
         "name": "Diora M",
         "desc": "20-23 клубники в шоколаде",
         "price": 650,
-        "photo": None,
+        "photo": "AgACAgIAAxkBAANwakpXmIfMEK2sgUo6de_1AUbtn3oAAjMZaxvS_FFKPXccg708R7sBAAMCAAN5AAM8BA",
     },
 ]
 
-# Бесплатные посыпки
 TOPPINGS = [
-    {"id": "topping_arахис", "name": "Арахис", "price": 0},
-    {"id": "topping_кокос", "name": "Кокос", "price": 0},
-    {"id": "topping_орео", "name": "Орео", "price": 0},
+    {"id": "topping_arakhis", "name": "Арахис", "price": 0},
+    {"id": "topping_kokos", "name": "Кокос", "price": 0},
+    {"id": "topping_oreo", "name": "Орео", "price": 0},
 ]
 
-# Платные добавки
 EXTRAS = [
-    {"id": "extra_ягоды", "name": "Свежие ягоды (голубика, клубника)", "price": 90},
+    {"id": "extra_yagody", "name": "Свежие ягоды (голубика, клубника)", "price": 90},
 ]
 
 
