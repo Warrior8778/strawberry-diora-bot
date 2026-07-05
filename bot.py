@@ -9,7 +9,8 @@ from telegram.ext import (
 from database.db import init_db
 from handlers.client import (
     start, faq_handler, contacts_handler, my_orders_handler,
-    ai_chat_handler, reset_chat, cancel_handler,
+    support_handler, ai_chat_handler, reset_chat, cancel_handler,
+    client_cancel_callback,
     booking_start, booking_get_name, booking_get_phone,
     booking_get_date, booking_get_time, booking_get_persons, booking_get_comment,
     BOOKING_NAME, BOOKING_PHONE, BOOKING_DATE, BOOKING_TIME, BOOKING_PERSONS, BOOKING_COMMENT
@@ -18,7 +19,7 @@ from handlers.catalog import show_catalog, show_cart, catalog_callback, cart_cal
 from handlers.admin import (
     admin_panel, admin_orders, admin_bookings, admin_tasks,
     create_task_start, task_get_title, task_get_desc, task_get_priority,
-    order_callback, booking_callback, task_callback,
+    order_callback, booking_callback, task_callback, get_photo_id,
     TASK_TITLE, TASK_DESC, TASK_PRIORITY
 )
 
@@ -37,7 +38,6 @@ async def post_init(application: Application):
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
 
-    # Бронирование
     booking_conv = ConversationHandler(
         entry_points=[MessageHandler(filters.Regex("^📅 Бронирование$"), booking_start)],
         states={
@@ -54,7 +54,6 @@ def main():
         ]
     )
 
-    # Создание задачи
     task_conv = ConversationHandler(
         entry_points=[CommandHandler("newtask", create_task_start)],
         states={
@@ -68,6 +67,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", admin_panel))
     app.add_handler(CommandHandler("reset", reset_chat))
+    app.add_handler(CommandHandler("addphoto", get_photo_id))
 
     app.add_handler(booking_conv)
     app.add_handler(task_conv)
@@ -78,23 +78,30 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^❓ FAQ$"), faq_handler))
     app.add_handler(MessageHandler(filters.Regex("^📞 Контакты$"), contacts_handler))
     app.add_handler(MessageHandler(filters.Regex("^🔍 Мои заказы$"), my_orders_handler))
+    app.add_handler(MessageHandler(filters.Regex("^💬 Поддержка$"), support_handler))
 
     # Кнопки админа
     app.add_handler(MessageHandler(filters.Regex("^📋 Заказы$"), admin_orders))
     app.add_handler(MessageHandler(filters.Regex("^📅 Брони$"), admin_bookings))
     app.add_handler(MessageHandler(filters.Regex("^✅ Задачи$"), admin_tasks))
 
-    # Callbacks каталога — каждый паттерн отдельно
-    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^cat_"))
-    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^item_"))
-    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^add_"))
-    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^back_to_cats$"))
+    # Фото от админа
+    app.add_handler(MessageHandler(filters.PHOTO, get_photo_id))
+
+    # Callbacks каталога
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^set_"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^back_to_sets$"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^toggle_"))
+    app.add_handler(CallbackQueryHandler(catalog_callback, pattern="^addset_"))
 
     # Callbacks корзины
     app.add_handler(CallbackQueryHandler(cart_callback, pattern="^show_cart$"))
     app.add_handler(CallbackQueryHandler(cart_callback, pattern="^clear_cart$"))
     app.add_handler(CallbackQueryHandler(cart_callback, pattern="^checkout$"))
     app.add_handler(CallbackQueryHandler(cart_callback, pattern="^confirm_order$"))
+
+    # Отмена заказа клиентом
+    app.add_handler(CallbackQueryHandler(client_cancel_callback, pattern="^client_cancel_"))
 
     # Callbacks админа
     app.add_handler(CallbackQueryHandler(order_callback, pattern="^order_"))

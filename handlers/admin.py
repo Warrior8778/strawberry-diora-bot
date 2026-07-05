@@ -246,3 +246,25 @@ async def task_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{query.message.text}\n\n✔️ *Задача выполнена!*",
         parse_mode="MarkdownV2"
     )
+
+
+# ─── ПОЛУЧИТЬ FILE_ID ФОТО ─────────────────────────────────
+
+async def get_photo_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправь фото с командой /addphoto — получишь file_id"""
+    if not is_admin(update.effective_user.id, context):
+        return
+
+    if update.message.photo:
+        file_id = update.message.photo[-1].file_id
+        await update.message.reply_text(
+            f"✅ file_id для menu_data.py:\n\n"
+            f"`{file_id}`\n\n"
+            f"Вставь это значение в поле photo нужного блюда.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            "📸 Отправь фото блюда вместе с командой /addphoto\n\n"
+            "Например: прикрепи фото и напиши /addphoto в подписи"
+        )

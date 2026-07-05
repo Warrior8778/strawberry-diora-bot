@@ -1,12 +1,12 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from menu_data import get_categories, get_items_by_category
+from menu_data import SETS, TOPPINGS, EXTRAS
 
 
 def main_menu_keyboard():
     keyboard = [
         [KeyboardButton("🛍 Каталог"), KeyboardButton("🛒 Корзина")],
         [KeyboardButton("📅 Бронирование"), KeyboardButton("🔍 Мои заказы")],
-        [KeyboardButton("❓ FAQ"), KeyboardButton("📞 Контакты")],
+        [KeyboardButton("💬 Поддержка"), KeyboardButton("❓ FAQ")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -19,68 +19,66 @@ def admin_menu_keyboard():
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 
-def categories_keyboard():
-    """Клавиатура категорий меню"""
-    categories = get_categories()
+def sets_keyboard():
+    """Галерея сетов"""
     keyboard = []
-    row = []
-    for i, cat in enumerate(categories):
-        row.append(InlineKeyboardButton(cat, callback_data=f"cat_{i}"))
-        if len(row) == 2:
-            keyboard.append(row)
-            row = []
-    if row:
-        keyboard.append(row)
+    for s in SETS:
+        keyboard.append([
+            InlineKeyboardButton(
+                f"{s['name']} — {s['price']}₽",
+                callback_data=f"set_{s['id']}"
+            )
+        ])
     keyboard.append([InlineKeyboardButton("🛒 Корзина", callback_data="show_cart")])
     return InlineKeyboardMarkup(keyboard)
 
 
-def items_keyboard(category_index: int):
-    """Клавиатура блюд в категории"""
-    categories = get_categories()
-    category = categories[category_index]
-    items = get_items_by_category(category)
+def toppings_keyboard(set_id: str, selected: list):
+    """Выбор посыпок и добавок (мультивыбор)"""
     keyboard = []
-    for item in items:
+
+    # Бесплатные посыпки
+    for t in TOPPINGS:
+        check = "✅" if t["id"] in selected else "◻️"
         keyboard.append([
             InlineKeyboardButton(
-                f"{item['name']} — {item['price']}₽",
-                callback_data=f"item_{item['id']}"
+                f"{check} {t['name']} (бесплатно)",
+                callback_data=f"toggle_{set_id}_{t['id']}"
             )
         ])
+
+    # Платные добавки
+    for e in EXTRAS:
+        check = "✅" if e["id"] in selected else "◻️"
+        keyboard.append([
+            InlineKeyboardButton(
+                f"{check} {e['name']} +{e['price']}₽",
+                callback_data=f"toggle_{set_id}_{e['id']}"
+            )
+        ])
+
     keyboard.append([
-        InlineKeyboardButton("◀️ Назад", callback_data="back_to_cats"),
+        InlineKeyboardButton("➕ Добавить в корзину", callback_data=f"addset_{set_id}"),
+    ])
+    keyboard.append([
+        InlineKeyboardButton("◀️ Назад", callback_data="back_to_sets"),
         InlineKeyboardButton("🛒 Корзина", callback_data="show_cart"),
     ])
     return InlineKeyboardMarkup(keyboard)
 
 
-def item_detail_keyboard(item_id: str, category_index: int):
-    """Кнопки на карточке блюда"""
-    keyboard = [
-        [InlineKeyboardButton("➕ Добавить в корзину", callback_data=f"add_{item_id}")],
-        [
-            InlineKeyboardButton("◀️ Назад", callback_data=f"cat_{category_index}"),
-            InlineKeyboardButton("🛒 Корзина", callback_data="show_cart"),
-        ],
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-
 def cart_keyboard():
-    """Кнопки корзины"""
     keyboard = [
         [InlineKeyboardButton("✅ Оформить заказ", callback_data="checkout")],
         [
             InlineKeyboardButton("🗑 Очистить", callback_data="clear_cart"),
-            InlineKeyboardButton("🛍 В меню", callback_data="back_to_cats"),
+            InlineKeyboardButton("🛍 В меню", callback_data="back_to_sets"),
         ],
     ]
     return InlineKeyboardMarkup(keyboard)
 
 
 def confirm_order_keyboard():
-    """Подтверждение заказа клиентом"""
     keyboard = [
         [
             InlineKeyboardButton("✅ Подтвердить", callback_data="confirm_order"),
