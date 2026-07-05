@@ -17,7 +17,8 @@ from handlers.client import (
 )
 from handlers.catalog import show_catalog, show_cart, catalog_callback, cart_callback
 from handlers.admin import (
-    admin_panel, admin_orders, admin_bookings, admin_tasks,
+    admin_panel, admin_orders, admin_bookings, admin_tasks, admin_stats,
+    orders_section_callback, stats_callback,
     create_task_start, task_get_title, task_get_desc, task_get_priority,
     order_callback, booking_callback, task_callback, get_photo_id,
     TASK_TITLE, TASK_DESC, TASK_PRIORITY
@@ -84,6 +85,7 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^📋 Заказы$"), admin_orders))
     app.add_handler(MessageHandler(filters.Regex("^📅 Брони$"), admin_bookings))
     app.add_handler(MessageHandler(filters.Regex("^✅ Задачи$"), admin_tasks))
+    app.add_handler(MessageHandler(filters.Regex("^📊 Статистика$"), admin_stats))
 
     # Фото от админа
     app.add_handler(MessageHandler(filters.PHOTO, get_photo_id))
@@ -102,6 +104,10 @@ def main():
 
     # Отмена заказа клиентом
     app.add_handler(CallbackQueryHandler(client_cancel_callback, pattern="^client_cancel_"))
+
+    # Callbacks разделов заказов и статистики
+    app.add_handler(CallbackQueryHandler(orders_section_callback, pattern="^orders_"))
+    app.add_handler(CallbackQueryHandler(stats_callback, pattern="^stats_"))
 
     # Callbacks админа
     app.add_handler(CallbackQueryHandler(order_callback, pattern="^order_"))
