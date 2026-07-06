@@ -326,7 +326,6 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     await query.message.reply_text(
         f"✅ Заказ #{order_id} оформлен!\n\n"
         f"{order_lines}\n\n"
-        f"{delivery_line}\n"
         f"💰 Итого с доставкой: {grand_total:,} Rp\n\n"
         f"📍 Адрес: {address}\n"
         f"📆 Дата: {date}\n"
