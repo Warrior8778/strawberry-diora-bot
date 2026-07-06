@@ -11,7 +11,7 @@ ORIGIN_LNG = 115.1985625
 # Тариф доставки
 DELIVERY_BASE_PRICE = 12000
 DELIVERY_BASE_KM = 5
-DELIVERY_PRICE_PER_KM = 3000
+DELIVERY_PRICE_PER_KM = 2500
 
 
 async def resolve_google_maps_url(url: str) -> tuple[float, float] | tuple[None, None]:
@@ -91,7 +91,7 @@ def calculate_delivery_cost(distance_km: float) -> int:
     if distance_km <= DELIVERY_BASE_KM:
         return DELIVERY_BASE_PRICE
     extra_km = distance_km - DELIVERY_BASE_KM
-    return DELIVERY_BASE_PRICE + round(extra_km) * DELIVERY_PRICE_PER_KM
+    return int(DELIVERY_BASE_PRICE + extra_km * DELIVERY_PRICE_PER_KM)
 
 
 def is_google_maps_url(text: str) -> bool:
