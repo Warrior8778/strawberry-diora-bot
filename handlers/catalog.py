@@ -243,7 +243,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not location:
         return False
 
-    await update.message.reply_text("📍 Геолокация получена! Считаю расстояние...")
+
 
     distance = await get_distance_km(location.latitude, location.longitude)
 
@@ -399,7 +399,7 @@ async def handle_maps_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_google_maps_url(text):
         return False
 
-    await update.message.reply_text("🔍 Обрабатываю ссылку...")
+
 
     lat, lng = await resolve_google_maps_url(text)
 

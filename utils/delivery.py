@@ -11,7 +11,7 @@ ORIGIN_LNG = 115.1985625
 # Тариф доставки
 DELIVERY_BASE_PRICE = 12000
 DELIVERY_BASE_KM = 5
-DELIVERY_PRICE_PER_KM = 2500
+DELIVERY_PRICE_PER_KM = 2700
 
 
 async def resolve_google_maps_url(url: str) -> tuple[float, float] | tuple[None, None]:
