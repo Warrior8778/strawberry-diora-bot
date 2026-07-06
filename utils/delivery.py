@@ -81,7 +81,7 @@ async def get_distance_km(dest_lat: float, dest_lng: float) -> float | None:
             data = resp.json()
             element = data["rows"][0]["elements"][0]
             if element["status"] == "OK":
-                return round(element["distance"]["value"] / 1000, 1)
+                return round(element["distance"]["value"] / 1000 * 1.4, 1)
     except Exception as e:
         print(f"Distance Matrix error: {e}")
     return None

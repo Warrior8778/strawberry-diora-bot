@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from menu_data import SETS, get_set_by_id, get_topping_by_id, TOPPINGS, EXTRAS
 from utils.keyboards import (
@@ -216,20 +216,27 @@ async def _start_checkout(query, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["awaiting_address"] = True
     context.user_data["checkout_step"] = "location"
 
-    # Кнопка для отправки геолокации
-    location_keyboard = ReplyKeyboardMarkup(
-        [[KeyboardButton("📍 Отправить геолокацию", request_location=True)]],
-        resize_keyboard=True,
-        one_time_keyboard=True
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    maps_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🗺 Открыть Google Maps", url="https://maps.google.com")]
+    ])
+    text = (
+        "📍 Укажи адрес доставки:
+
+"
+        "1️⃣ Нажми кнопку ниже → открой Google Maps
+"
+        "2️⃣ Найди нужное место → нажми на точку
+"
+        "3️⃣ Нажми Поделиться → скопируй ссылку → отправь сюда
+
+"
+        "Или просто напиши адрес текстом."
     )
     try:
-        await query.edit_message_text("📍 Отправь свою геолокацию или напиши адрес:")
+        await query.edit_message_text(text, reply_markup=maps_keyboard)
     except Exception:
-        pass
-    await query.message.reply_text(
-        "👇 Нажми кнопку чтобы отправить геолокацию, или напиши адрес вручную:",
-        reply_markup=location_keyboard
-    )
+        await query.message.reply_text(text, reply_markup=maps_keyboard)
 
 
 async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
