@@ -106,7 +106,7 @@ async def catalog_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cart[cart_key] = {"name": s["name"], "desc": topping_str, "price": total_price, "qty": 1}
         count = sum(v["qty"] for v in cart.values())
         total = sum(v["price"] * v["qty"] for v in cart.values())
-        await query.answer(f"✅ {s['name']} добавлен! Корзина: {count} поз. / {total} Rp", show_alert=False)
+        await query.answer(f"✅ {s['name']} добавлен в корзину!", show_alert=True)
 
 
 async def show_cart(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -148,23 +148,6 @@ async def cart_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not cart:
             await query.answer("Корзина пуста!", show_alert=True)
             return
-        total = sum(v["price"] * v["qty"] for v in cart.values())
-        lines = "\n".join(
-            f"- {v['name']} ({v['desc']}) x{v['qty']} = {v['price'] * v['qty']} Rp"
-            for v in cart.values()
-        )
-        try:
-            await query.edit_message_text(
-                f"Подтверди заказ:\n\n{lines}\n\nИтого: {total} Rp\n\nПодтверждаешь?",
-                reply_markup=confirm_order_keyboard()
-            )
-        except Exception:
-            await query.message.reply_text(
-                f"Подтверди заказ:\n\n{lines}\n\nИтого: {total} Rp\n\nПодтверждаешь?",
-                reply_markup=confirm_order_keyboard()
-            )
-
-    elif data == "confirm_order":
         await _start_checkout(query, context)
 
 
@@ -220,7 +203,12 @@ async def _start_checkout(query, context: ContextTypes.DEFAULT_TYPE):
     maps_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🗺 Открыть Google Maps", url="https://maps.google.com")]
     ])
-    text = ("📍 Укажи адрес доставки:\n\n1. Нажми кнопку ниже - открой Google Maps\n2. Найди нужное место - нажми на точку\n3. Нажми Поделиться - скопируй ссылку - отправь сюда\n\nИли напиши адрес текстом.")
+    text = (
+        "📍 Пришлите адрес доставки, чтобы наш администратор мог рассчитать финальную стоимость вместе с доставкой.\n\n"
+        "Вы можете:\n"
+        "• Открыть Google Maps, выбрать точку и отправить ссылку\n"
+        "• Или написать адрес текстом"
+    )
     try:
         await query.edit_message_text(text, reply_markup=maps_keyboard)
     except Exception:
@@ -326,7 +314,8 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     await query.message.reply_text(
         f"✅ Заказ #{order_id} оформлен!\n\n"
         f"{order_lines}\n\n"
-        f"💰 Итого с доставкой: {grand_total:,} Rp\n\n"
+        f"💰 Итого: {grand_total:,} Rp\n"
+        f"🚗 Доставка: уточним при звонке\n\n"
         f"📍 Адрес: {address}\n"
         f"📆 Дата: {date}\n"
         f"🕐 Время: {time}\n\n"
