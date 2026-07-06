@@ -220,19 +220,7 @@ async def _start_checkout(query, context: ContextTypes.DEFAULT_TYPE):
     maps_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🗺 Открыть Google Maps", url="https://maps.google.com")]
     ])
-    text = (
-        "📍 Укажи адрес доставки:
-
-"
-        "1️⃣ Нажми кнопку ниже → открой Google Maps
-"
-        "2️⃣ Найди нужное место → нажми на точку
-"
-        "3️⃣ Нажми Поделиться → скопируй ссылку → отправь сюда
-
-"
-        "Или просто напиши адрес текстом."
-    )
+    text = ("📍 Укажи адрес доставки:\n\n1. Нажми кнопку ниже - открой Google Maps\n2. Найди нужное место - нажми на точку\n3. Нажми Поделиться - скопируй ссылку - отправь сюда\n\nИли напиши адрес текстом.")
     try:
         await query.edit_message_text(text, reply_markup=maps_keyboard)
     except Exception:
