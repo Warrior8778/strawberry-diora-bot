@@ -250,10 +250,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["delivery_distance"] = distance
         context.user_data["delivery_cost"] = delivery_cost
 
-        await update.message.reply_text(
-            f"Расстояние: {distance} км\n"
-            f"Стоимость доставки: {delivery_cost:,} Rp"
-        )
+
     else:
         context.user_data["delivery_address"] = f"Геолокация ({location.latitude:.4f}, {location.longitude:.4f})"
         context.user_data["delivery_cost"] = 12000
@@ -408,10 +405,7 @@ async def handle_maps_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data["delivery_distance"] = distance
             context.user_data["delivery_cost"] = delivery_cost
 
-            await update.message.reply_text(
-                f"Расстояние: {distance} км\n"
-                f"Стоимость доставки: {delivery_cost:,} Rp"
-            )
+
         else:
             context.user_data["delivery_address"] = text
             context.user_data["delivery_cost"] = None
