@@ -106,7 +106,7 @@ async def catalog_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cart[cart_key] = {"name": s["name"], "desc": topping_str, "price": total_price, "qty": 1}
         count = sum(v["qty"] for v in cart.values())
         total = sum(v["price"] * v["qty"] for v in cart.values())
-        await query.answer(f"✅ {s['name']} добавлен в корзину!", show_alert=True)
+        await query.answer(f"✅ {s['name']} добавлен!\nПерейди в 🛒 Корзину для оформления заказа", show_alert=True)
 
 
 async def show_cart(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -291,22 +291,11 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     address = context.user_data.get("delivery_address", "")
     date = context.user_data.get("delivery_date", "")
     time = context.user_data.get("delivery_time", "")
-    delivery_cost = context.user_data.get("delivery_cost")
-    distance = context.user_data.get("delivery_distance")
-
-    if delivery_cost is not None:
-        grand_total = order_total + delivery_cost
-        delivery_line = f"🚗 Доставка: {delivery_cost:,} Rp"
-        if distance:
-            delivery_line += f" ({distance} км)"
-    else:
-        grand_total = order_total
-        delivery_line = "🚗 Доставка: уточним при подтверждении"
 
     full_description = (
         f"{order_lines}\n\n"
-        f"{delivery_line}\n"
-        f"💰 Итого с доставкой: {grand_total:,} Rp"
+        f"💰 Итого: {order_total:,} Rp\n"
+        f"🚗 Доставка: уточним при звонке"
     )
 
     order_id = await create_order(user.id, full_description, address)
@@ -314,7 +303,7 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     await query.message.reply_text(
         f"✅ Заказ #{order_id} оформлен!\n\n"
         f"{order_lines}\n\n"
-        f"💰 Итого: {grand_total:,} Rp\n"
+        f"💰 Итого: {order_total:,} Rp\n"
         f"🚗 Доставка: уточним при звонке\n\n"
         f"📍 Адрес: {address}\n"
         f"📆 Дата: {date}\n"
@@ -326,29 +315,17 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     admin_ids = context.bot_data.get("admin_ids", [])
     from utils.keyboards import order_status_keyboard
 
-    admin_delivery = f"Delivery: {delivery_cost:,} Rp" if delivery_cost else "Delivery: TBD"
-    if distance:
-        admin_delivery += f" ({distance} km)"
-
     for admin_id in admin_ids:
         try:
             msg = (
                 f"New Order #{order_id}\n\n"
                 f"Client: {user.full_name} (@{user.username or '-'})\n\n"
                 f"{order_lines}\n\n"
-                f"{admin_delivery}\n"
-                f"Total incl. delivery: {grand_total:,} Rp\n\n"
+                f"Order Total: {order_total:,} Rp (delivery TBD)\n\n"
                 f"Address: {address}\n"
                 f"Date: {date}\n"
                 f"Time: {time}"
             )
-            # Если есть геолокация — отправляем её отдельно
-            if context.user_data.get("delivery_lat"):
-                await context.bot.send_location(
-                    chat_id=admin_id,
-                    latitude=context.user_data["delivery_lat"],
-                    longitude=context.user_data["delivery_lng"]
-                )
             await context.bot.send_message(
                 chat_id=admin_id,
                 text=msg,
