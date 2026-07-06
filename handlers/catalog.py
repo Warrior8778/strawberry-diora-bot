@@ -106,7 +106,24 @@ async def catalog_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cart[cart_key] = {"name": s["name"], "desc": topping_str, "price": total_price, "qty": 1}
         count = sum(v["qty"] for v in cart.values())
         total = sum(v["price"] * v["qty"] for v in cart.values())
-        await query.answer(f"✅ {s['name']} добавлен!\nПерейди в 🛒 Корзину для оформления заказа", show_alert=True)
+        await query.answer("✅ Добавлено!")
+        # Показываем сообщение с кнопкой перехода в корзину
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🛒 Перейти в корзину", callback_data="show_cart")],
+            [InlineKeyboardButton("◀️ Продолжить покупки", callback_data="back_to_sets")],
+        ])
+        try:
+            await query.edit_message_text(
+                f"✅ {s['name']} добавлен в корзину!\n\n"
+                f"В корзине: {count} поз. на сумму {total:,} Rp",
+                reply_markup=keyboard
+            )
+        except Exception:
+            await query.message.reply_text(
+                f"✅ {s['name']} добавлен в корзину!\n\n"
+                f"В корзине: {count} поз. на сумму {total:,} Rp",
+                reply_markup=keyboard
+            )
 
 
 async def show_cart(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -294,8 +311,7 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
 
     full_description = (
         f"{order_lines}\n\n"
-        f"💰 Итого: {order_total:,} Rp\n"
-        f"🚗 Доставка: уточним при звонке"
+        f"💰 Итого: {order_total:,} Rp"
     )
 
     order_id = await create_order(user.id, full_description, address)
@@ -303,12 +319,11 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     await query.message.reply_text(
         f"✅ Заказ #{order_id} оформлен!\n\n"
         f"{order_lines}\n\n"
-        f"💰 Итого: {order_total:,} Rp\n"
-        f"🚗 Доставка: уточним при звонке\n\n"
+        f"💰 Итого: {order_total:,} Rp\n\n"
         f"📍 Адрес: {address}\n"
         f"📆 Дата: {date}\n"
         f"🕐 Время: {time}\n\n"
-        f"Ожидайте звонка для подтверждения! 🍓",
+        f"Наш администратор напишет финальную стоимость после подсчёта суммы доставки 🍓",
         reply_markup=main_menu_keyboard()
     )
 
