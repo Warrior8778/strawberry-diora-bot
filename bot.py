@@ -15,7 +15,10 @@ from handlers.client import (
     booking_get_date, booking_get_time, booking_get_persons, booking_get_comment,
     BOOKING_NAME, BOOKING_PHONE, BOOKING_DATE, BOOKING_TIME, BOOKING_PERSONS, BOOKING_COMMENT
 )
-from handlers.catalog import show_catalog, show_cart, catalog_callback, cart_callback, date_time_callback
+from handlers.catalog import (
+    show_catalog, show_cart, catalog_callback, cart_callback,
+    date_time_callback, handle_location
+)
 from handlers.admin import (
     admin_panel, admin_orders, admin_bookings, admin_tasks, admin_stats,
     orders_section_callback, stats_callback,
@@ -73,7 +76,10 @@ def main():
     app.add_handler(booking_conv)
     app.add_handler(task_conv)
 
-    # Кнопки клиента (Russian)
+    # Геолокация
+    app.add_handler(MessageHandler(filters.LOCATION, handle_location))
+
+    # Кнопки клиента
     app.add_handler(MessageHandler(filters.Regex("^🛍 Каталог$"), show_catalog))
     app.add_handler(MessageHandler(filters.Regex("^🛒 Корзина$"), show_cart))
     app.add_handler(MessageHandler(filters.Regex("^❓ FAQ$"), faq_handler))
@@ -81,7 +87,7 @@ def main():
     app.add_handler(MessageHandler(filters.Regex("^🔍 Мои заказы$"), my_orders_handler))
     app.add_handler(MessageHandler(filters.Regex("^💬 Поддержка$"), support_handler))
 
-    # Кнопки админа (English)
+    # Кнопки админа
     app.add_handler(MessageHandler(filters.Regex("^📋 Orders$"), admin_orders))
     app.add_handler(MessageHandler(filters.Regex("^📅 Bookings$"), admin_bookings))
     app.add_handler(MessageHandler(filters.Regex("^✅ Tasks$"), admin_tasks))

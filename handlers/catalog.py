@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 from menu_data import SETS, get_set_by_id, get_topping_by_id, TOPPINGS, EXTRAS
 from utils.keyboards import (
@@ -6,6 +6,7 @@ from utils.keyboards import (
     confirm_order_keyboard, main_menu_keyboard,
     date_keyboard, time_keyboard
 )
+from utils.delivery import get_distance_km, calculate_delivery_cost
 from database.db import create_order
 
 
@@ -188,9 +189,7 @@ async def date_time_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif data.startswith("time_"):
         time_val = data[5:]
         context.user_data["delivery_time"] = time_val
-        await query.edit_message_text(
-            f"Время: {time_val} — отлично!"
-        )
+        await query.edit_message_text(f"🕐 Время: {time_val} — отлично!")
         await _finalize_order_from_callback(query, context)
 
 
@@ -212,24 +211,77 @@ async def _start_checkout(query, context: ContextTypes.DEFAULT_TYPE):
         f"- {v['name']} ({v['desc']}) x{v['qty']} = {v['price'] * v['qty']} Rp"
         for v in cart.values()
     )
-    context.user_data["pending_order_desc"] = lines + f"\n\nИтого: {total} Rp"
+    context.user_data["pending_order_desc"] = lines
     context.user_data["pending_order_total"] = total
     context.user_data["awaiting_address"] = True
-    context.user_data["checkout_step"] = "address"
+    context.user_data["checkout_step"] = "location"
+
+    # Кнопка для отправки геолокации
+    location_keyboard = ReplyKeyboardMarkup(
+        [[KeyboardButton("📍 Отправить геолокацию", request_location=True)]],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
     try:
-        await query.edit_message_text("📍 Введи адрес доставки:")
+        await query.edit_message_text("📍 Отправь свою геолокацию или напиши адрес:")
     except Exception:
-        await query.message.reply_text("📍 Введи адрес доставки:")
+        pass
+    await query.message.reply_text(
+        "👇 Нажми кнопку чтобы отправить геолокацию, или напиши адрес вручную:",
+        reply_markup=location_keyboard
+    )
+
+
+async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка геолокации от клиента"""
+    if not context.user_data.get("awaiting_address"):
+        return False
+    if context.user_data.get("checkout_step") != "location":
+        return False
+
+    location = update.message.location
+    if not location:
+        return False
+
+    await update.message.reply_text("📍 Геолокация получена! Считаю расстояние...")
+
+    distance = await get_distance_km(location.latitude, location.longitude)
+
+    if distance:
+        delivery_cost = calculate_delivery_cost(distance)
+        context.user_data["delivery_address"] = f"📍 Геолокация ({location.latitude:.4f}, {location.longitude:.4f})"
+        context.user_data["delivery_lat"] = location.latitude
+        context.user_data["delivery_lng"] = location.longitude
+        context.user_data["delivery_distance"] = distance
+        context.user_data["delivery_cost"] = delivery_cost
+
+        await update.message.reply_text(
+            f"Расстояние: {distance} км\n"
+            f"Стоимость доставки: {delivery_cost:,} Rp"
+        )
+    else:
+        context.user_data["delivery_address"] = f"Геолокация ({location.latitude:.4f}, {location.longitude:.4f})"
+        context.user_data["delivery_cost"] = 12000
+        await update.message.reply_text("Не удалось рассчитать расстояние, стоимость доставки уточним при подтверждении.")
+
+    context.user_data["checkout_step"] = "date"
+    await update.message.reply_text(
+        "📆 Выбери дату доставки:",
+        reply_markup=date_keyboard()
+    )
+    return True
 
 
 async def handle_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_address"):
         return False
 
-    step = context.user_data.get("checkout_step", "address")
+    step = context.user_data.get("checkout_step")
 
-    if step == "address":
+    if step == "location":
+        # Клиент написал адрес текстом вместо геолокации
         context.user_data["delivery_address"] = update.message.text
+        context.user_data["delivery_cost"] = None
         context.user_data["checkout_step"] = "date"
         await update.message.reply_text(
             "📆 Выбери дату доставки:",
@@ -251,37 +303,72 @@ async def handle_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYPE):
     user = query.from_user
-    description = context.user_data.get("pending_order_desc", "")
+    order_lines = context.user_data.get("pending_order_desc", "")
+    order_total = context.user_data.get("pending_order_total", 0)
     address = context.user_data.get("delivery_address", "")
     date = context.user_data.get("delivery_date", "")
     time = context.user_data.get("delivery_time", "")
+    delivery_cost = context.user_data.get("delivery_cost")
+    distance = context.user_data.get("delivery_distance")
 
-    order_id = await create_order(user.id, description, address)
+    if delivery_cost is not None:
+        grand_total = order_total + delivery_cost
+        delivery_line = f"🚗 Доставка: {delivery_cost:,} Rp"
+        if distance:
+            delivery_line += f" ({distance} км)"
+    else:
+        grand_total = order_total
+        delivery_line = "🚗 Доставка: уточним при подтверждении"
+
+    full_description = (
+        f"{order_lines}\n\n"
+        f"{delivery_line}\n"
+        f"💰 Итого с доставкой: {grand_total:,} Rp"
+    )
+
+    order_id = await create_order(user.id, full_description, address)
 
     await query.message.reply_text(
         f"✅ Заказ #{order_id} оформлен!\n\n"
-        f"{description}\n\n"
-        f"Адрес: {address}\n"
-        f"Дата: {date}\n"
-        f"Время: {time}\n\n"
+        f"{order_lines}\n\n"
+        f"{delivery_line}\n"
+        f"💰 Итого с доставкой: {grand_total:,} Rp\n\n"
+        f"📍 Адрес: {address}\n"
+        f"📆 Дата: {date}\n"
+        f"🕐 Время: {time}\n\n"
         f"Ожидайте звонка для подтверждения! 🍓",
         reply_markup=main_menu_keyboard()
     )
 
     admin_ids = context.bot_data.get("admin_ids", [])
     from utils.keyboards import order_status_keyboard
+
+    admin_delivery = f"Delivery: {delivery_cost:,} Rp" if delivery_cost else "Delivery: TBD"
+    if distance:
+        admin_delivery += f" ({distance} km)"
+
     for admin_id in admin_ids:
         try:
+            msg = (
+                f"New Order #{order_id}\n\n"
+                f"Client: {user.full_name} (@{user.username or '-'})\n\n"
+                f"{order_lines}\n\n"
+                f"{admin_delivery}\n"
+                f"Total incl. delivery: {grand_total:,} Rp\n\n"
+                f"Address: {address}\n"
+                f"Date: {date}\n"
+                f"Time: {time}"
+            )
+            # Если есть геолокация — отправляем её отдельно
+            if context.user_data.get("delivery_lat"):
+                await context.bot.send_location(
+                    chat_id=admin_id,
+                    latitude=context.user_data["delivery_lat"],
+                    longitude=context.user_data["delivery_lng"]
+                )
             await context.bot.send_message(
                 chat_id=admin_id,
-                text=(
-                    f"New Order #{order_id}\n\n"
-                    f"Client: {user.full_name} (@{user.username or '-'})\n\n"
-                    f"{description}\n\n"
-                    f"Address: {address}\n"
-                    f"Date: {date}\n"
-                    f"Time: {time}"
-                ),
+                text=msg,
                 reply_markup=order_status_keyboard(order_id)
             )
         except Exception:
@@ -290,3 +377,7 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     context.user_data["cart"] = {}
     context.user_data["awaiting_address"] = False
     context.user_data["checkout_step"] = None
+    context.user_data["delivery_cost"] = None
+    context.user_data["delivery_distance"] = None
+    context.user_data["delivery_lat"] = None
+    context.user_data["delivery_lng"] = None
