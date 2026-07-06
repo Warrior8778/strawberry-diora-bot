@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 from database.db import (
     get_or_create_client, get_orders_by_user,
     create_booking, clear_chat_history, update_order_status
@@ -10,24 +10,24 @@ from handlers.catalog import show_catalog, show_cart, handle_address
 
 BOOKING_NAME, BOOKING_PHONE, BOOKING_DATE, BOOKING_TIME, BOOKING_PERSONS, BOOKING_COMMENT = range(10, 16)
 
-ADMIN_USERNAME = "patsevoleg"  # Telegram username администратора (без @)
+ADMIN_USERNAME = "patsevoleg"
 
 FAQ_TEXT = (
-    "Часто задаваемые вопросы — Strawberry Diora 🍓\n\n"
+    "Strawberry Diora 🍓 — Частые вопросы\n\n"
     "Как сделать заказ?\n"
-    "Нажмите «🛍 Каталог», выберите блюда, добавьте в корзину и оформите заказ.\n\n"
+    "Нажми «Каталог», выбери сет, добавь в корзину и оформи заказ.\n\n"
     "Сколько времени занимает доставка?\n"
     "От 30 до 60 минут в зависимости от района.\n\n"
     "Способы оплаты:\n"
     "Наличные, банковская карта, онлайн-оплата.\n\n"
     "Как забронировать стол?\n"
-    "Нажмите «📅 Бронирование» и заполните форму.\n\n"
+    "Нажми «Бронирование» и заполни форму.\n\n"
     "Режим работы:\n"
-    "Ежедневно с 09:00 до 22:00"
+    "Ежедневно 09:00 — 22:00"
 )
 
 CONTACTS_TEXT = (
-    "Контакты Strawberry Diora 🍓\n\n"
+    "Strawberry Diora 🍓 — Контакты\n\n"
     "Телефон: +7 (XXX) XXX-XX-XX\n"
     "Адрес: г. Москва, ул. Примерная, д. 1\n"
     "Работаем: 09:00 — 22:00 (ежедневно)"
@@ -54,7 +54,7 @@ async def contacts_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def support_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 Написать администратору", url=f"https://t.me/{ADMIN_USERNAME}")]
+        [InlineKeyboardButton("💬 Написать нам", url=f"https://t.me/{ADMIN_USERNAME}")]
     ])
     await update.message.reply_text(
         "Нажми кнопку ниже чтобы написать нам напрямую:",
@@ -76,16 +76,14 @@ async def my_orders_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cancellable = {"new", "accepted"}
 
     await update.message.reply_text("📋 Ваши последние заказы:")
-
     for order in orders:
         emoji = status_emoji.get(order["status"], "❓")
         status = status_text.get(order["status"], order["status"])
         text = (
             f"{emoji} Заказ #{order['id']}\n"
-            f"📌 Статус: {status}\n"
-            f"🕐 {order['created_at'][:16]}"
+            f"Статус: {status}\n"
+            f"Время: {order['created_at'][:16]}"
         )
-        # Кнопка отмены только для активных заказов
         if order["status"] in cancellable:
             keyboard = InlineKeyboardMarkup([
                 [InlineKeyboardButton("❌ Отменить заказ", callback_data=f"client_cancel_{order['id']}")]
@@ -99,14 +97,10 @@ async def client_cancel_callback(update: Update, context: ContextTypes.DEFAULT_T
     query = update.callback_query
     await query.answer()
     order_id = int(query.data.split("_")[2])
-
     await update_order_status(order_id, "cancelled")
-
     await query.edit_message_text(
         f"❌ Заказ #{order_id} отменён.\n\nЕсли это ошибка — свяжитесь с нами."
     )
-
-    # Уведомляем администратора
     admin_ids = context.bot_data.get("admin_ids", [])
     user = query.from_user
     for admin_id in admin_ids:
@@ -114,8 +108,8 @@ async def client_cancel_callback(update: Update, context: ContextTypes.DEFAULT_T
             await context.bot.send_message(
                 chat_id=admin_id,
                 text=(
-                    f"❌ Заказ #{order_id} отменён клиентом\n\n"
-                    f"Клиент: {user.full_name} (@{user.username or '-'})"
+                    f"❌ Order #{order_id} cancelled by client\n\n"
+                    f"Client: {user.full_name} (@{user.username or '-'})"
                 )
             )
         except Exception:
@@ -125,10 +119,7 @@ async def client_cancel_callback(update: Update, context: ContextTypes.DEFAULT_T
 # ─── БРОНИРОВАНИЕ ──────────────────────────────────────────
 
 async def booking_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "📅 Бронирование стола\n\nВведите ваше имя:",
-        reply_markup=cancel_keyboard()
-    )
+    await update.message.reply_text("📅 Бронирование стола\n\nВведите ваше имя:", reply_markup=cancel_keyboard())
     return BOOKING_NAME
 
 async def booking_get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -175,9 +166,9 @@ async def booking_get_comment(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     await update.message.reply_text(
         f"✅ Бронирование #{booking_id} оформлено!\n\n"
-        f"👤 {data['booking_name']}\n"
-        f"📆 {data['booking_date']} в {data['booking_time']}\n"
-        f"👥 {data['booking_persons']} чел.\n\n"
+        f"Имя: {data['booking_name']}\n"
+        f"Дата: {data['booking_date']} в {data['booking_time']}\n"
+        f"Гостей: {data['booking_persons']}\n\n"
         "Подтвердим в ближайшее время! 🍓",
         reply_markup=main_menu_keyboard()
     )
@@ -188,12 +179,12 @@ async def booking_get_comment(update: Update, context: ContextTypes.DEFAULT_TYPE
             await context.bot.send_message(
                 chat_id=admin_id,
                 text=(
-                    f"📅 Новое бронирование #{booking_id}\n\n"
-                    f"👤 {data['booking_name']}\n"
-                    f"📞 {data['booking_phone']}\n"
-                    f"📆 {data['booking_date']} в {data['booking_time']}\n"
-                    f"👥 {data['booking_persons']} чел.\n"
-                    f"💬 {comment or 'нет'}"
+                    f"New Booking #{booking_id}\n\n"
+                    f"Name: {data['booking_name']}\n"
+                    f"Phone: {data['booking_phone']}\n"
+                    f"Date: {data['booking_date']} at {data['booking_time']}\n"
+                    f"Guests: {data['booking_persons']}\n"
+                    f"Comment: {comment or 'none'}"
                 ),
                 reply_markup=booking_action_keyboard(booking_id)
             )
@@ -211,7 +202,7 @@ async def ai_chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     menu_buttons = {
         "🛍 Каталог", "🛒 Корзина", "📅 Бронирование", "🔍 Мои заказы",
         "❓ FAQ", "📞 Контакты", "💬 Поддержка",
-        "📋 Заказы", "📅 Брони", "✅ Задачи"
+        "📋 Orders", "📅 Bookings", "✅ Tasks", "📊 Statistics"
     }
     if text in menu_buttons:
         return

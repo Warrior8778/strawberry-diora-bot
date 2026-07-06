@@ -2,34 +2,34 @@ SETS = [
     {
         "id": "set_xs",
         "name": "Diora XS",
-        "desc": "4 клубники в шоколаде",
+        "desc": "4 chocolate-covered strawberries",
         "price": 140,
         "photo": "AgACAgIAAxkBAANyakpXr3QyVTtwTCYxDoczTiUYzB8AAjQZaxvS_FFKjOiugMc9P7ABAAMCAAN5AAM8BA",
     },
     {
         "id": "set_s",
         "name": "Diora S",
-        "desc": "12-15 клубник в шоколаде",
+        "desc": "12-15 chocolate-covered strawberries",
         "price": 420,
         "photo": "AgACAgIAAxkBAANuakpXZqe1d0CeipnQYlicJP1py8oAAjIZaxvS_FFKfa3PTvP8hEoBAAMCAAN5AAM8BA",
     },
     {
         "id": "set_m",
         "name": "Diora M",
-        "desc": "20-23 клубники в шоколаде",
+        "desc": "20-23 chocolate-covered strawberries",
         "price": 650,
         "photo": "AgACAgIAAxkBAANwakpXmIfMEK2sgUo6de_1AUbtn3oAAjMZaxvS_FFKPXccg708R7sBAAMCAAN5AAM8BA",
     },
 ]
 
 TOPPINGS = [
-    {"id": "topping_arakhis", "name": "Арахис", "price": 0},
-    {"id": "topping_kokos", "name": "Кокос", "price": 0},
-    {"id": "topping_oreo", "name": "Орео", "price": 0},
+    {"id": "topping_peanut", "name": "Peanut", "price": 0},
+    {"id": "topping_coconut", "name": "Coconut", "price": 0},
+    {"id": "topping_oreo", "name": "Oreo", "price": 0},
 ]
 
 EXTRAS = [
-    {"id": "extra_yagody", "name": "Свежие ягоды (голубика, клубника)", "price": 90},
+    {"id": "extra_berries", "name": "Fresh berries (blueberry, strawberry)", "price": 90},
 ]
 
 

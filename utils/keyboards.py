@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from menu_data import SETS, TOPPINGS, EXTRAS
+from datetime import datetime, timedelta
 
 
 def main_menu_keyboard():
@@ -13,19 +14,18 @@ def main_menu_keyboard():
 
 def admin_menu_keyboard():
     keyboard = [
-        [KeyboardButton("📋 Заказы"), KeyboardButton("📅 Брони")],
-        [KeyboardButton("✅ Задачи"), KeyboardButton("📊 Статистика")],
+        [KeyboardButton("📋 Orders"), KeyboardButton("📅 Bookings")],
+        [KeyboardButton("✅ Tasks"), KeyboardButton("📊 Statistics")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 
 def sets_keyboard():
-    """Галерея сетов"""
     keyboard = []
     for s in SETS:
         keyboard.append([
             InlineKeyboardButton(
-                f"{s['name']} — {s['price']}₽",
+                f"{s['name']} — {s['price']} Rp",
                 callback_data=f"set_{s['id']}"
             )
         ])
@@ -34,10 +34,7 @@ def sets_keyboard():
 
 
 def toppings_keyboard(set_id: str, selected: list):
-    """Выбор посыпок и добавок (мультивыбор)"""
     keyboard = []
-
-    # Бесплатные посыпки
     for t in TOPPINGS:
         check = "✅" if t["id"] in selected else "◻️"
         keyboard.append([
@@ -46,20 +43,15 @@ def toppings_keyboard(set_id: str, selected: list):
                 callback_data=f"toggle_{set_id}_{t['id']}"
             )
         ])
-
-    # Платные добавки
     for e in EXTRAS:
         check = "✅" if e["id"] in selected else "◻️"
         keyboard.append([
             InlineKeyboardButton(
-                f"{check} {e['name']} +{e['price']}₽",
+                f"{check} {e['name']} +{e['price']} Rp",
                 callback_data=f"toggle_{set_id}_{e['id']}"
             )
         ])
-
-    keyboard.append([
-        InlineKeyboardButton("➕ Добавить в корзину", callback_data=f"addset_{set_id}"),
-    ])
+    keyboard.append([InlineKeyboardButton("➕ Добавить в корзину", callback_data=f"addset_{set_id}")])
     keyboard.append([
         InlineKeyboardButton("◀️ Назад", callback_data="back_to_sets"),
         InlineKeyboardButton("🛒 Корзина", callback_data="show_cart"),
@@ -88,15 +80,47 @@ def confirm_order_keyboard():
     return InlineKeyboardMarkup(keyboard)
 
 
+def date_keyboard():
+    today = datetime.now()
+    tomorrow = today + timedelta(days=1)
+    day_after = today + timedelta(days=2)
+    keyboard = [
+        [
+            InlineKeyboardButton(f"Сегодня ({today.strftime('%d.%m')})", callback_data=f"date_{today.strftime('%d.%m.%Y')}"),
+            InlineKeyboardButton(f"Завтра ({tomorrow.strftime('%d.%m')})", callback_data=f"date_{tomorrow.strftime('%d.%m.%Y')}"),
+        ],
+        [
+            InlineKeyboardButton(day_after.strftime('%d.%m.%Y'), callback_data=f"date_{day_after.strftime('%d.%m.%Y')}"),
+            InlineKeyboardButton("Другая дата", callback_data="date_custom"),
+        ],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def time_keyboard():
+    slots = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
+             "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
+    keyboard = []
+    row = []
+    for i, slot in enumerate(slots):
+        row.append(InlineKeyboardButton(slot, callback_data=f"time_{slot}"))
+        if len(row) == 3:
+            keyboard.append(row)
+            row = []
+    if row:
+        keyboard.append(row)
+    return InlineKeyboardMarkup(keyboard)
+
+
 def order_status_keyboard(order_id: int):
     keyboard = [
         [
-            InlineKeyboardButton("✅ Принять", callback_data=f"order_accept_{order_id}"),
-            InlineKeyboardButton("🚀 В доставке", callback_data=f"order_delivery_{order_id}"),
+            InlineKeyboardButton("✅ Accept", callback_data=f"order_accept_{order_id}"),
+            InlineKeyboardButton("🚀 Delivering", callback_data=f"order_delivery_{order_id}"),
         ],
         [
-            InlineKeyboardButton("✔️ Выполнен", callback_data=f"order_done_{order_id}"),
-            InlineKeyboardButton("❌ Отменить", callback_data=f"order_cancel_{order_id}"),
+            InlineKeyboardButton("✔️ Done", callback_data=f"order_done_{order_id}"),
+            InlineKeyboardButton("❌ Cancel", callback_data=f"order_cancel_{order_id}"),
         ],
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -105,8 +129,8 @@ def order_status_keyboard(order_id: int):
 def booking_action_keyboard(booking_id: int):
     keyboard = [
         [
-            InlineKeyboardButton("✅ Подтвердить", callback_data=f"booking_confirm_{booking_id}"),
-            InlineKeyboardButton("❌ Отклонить", callback_data=f"booking_reject_{booking_id}"),
+            InlineKeyboardButton("✅ Confirm", callback_data=f"booking_confirm_{booking_id}"),
+            InlineKeyboardButton("❌ Reject", callback_data=f"booking_reject_{booking_id}"),
         ],
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -114,7 +138,7 @@ def booking_action_keyboard(booking_id: int):
 
 def task_done_keyboard(task_id: int):
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ Выполнено", callback_data=f"task_done_{task_id}")]
+        [InlineKeyboardButton("✅ Done", callback_data=f"task_done_{task_id}")]
     ])
 
 
