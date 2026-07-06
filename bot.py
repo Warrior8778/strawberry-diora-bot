@@ -17,7 +17,7 @@ from handlers.client import (
 )
 from handlers.catalog import (
     show_catalog, show_cart, catalog_callback, cart_callback,
-    date_time_callback, handle_location
+    date_time_callback, handle_location, handle_maps_url
 )
 from handlers.admin import (
     admin_panel, admin_orders, admin_bookings, admin_tasks, admin_stats,
@@ -124,7 +124,7 @@ def main():
     app.add_handler(CallbackQueryHandler(booking_callback, pattern="^booking_"))
     app.add_handler(CallbackQueryHandler(task_callback, pattern="^task_done_"))
 
-    # AI чат
+    # AI чат (включает обработку ссылок Maps и текстовых адресов)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ai_chat_handler))
 
     print("🚀 Starting...")

@@ -210,6 +210,12 @@ async def ai_chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await handle_address(update, context):
         return
 
+    # Проверяем ссылку Google Maps
+    from handlers.catalog import handle_maps_url
+    from utils.delivery import is_google_maps_url
+    if is_google_maps_url(text) and await handle_maps_url(update, context):
+        return
+
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     response = await get_ai_response(user.id, text)
     await update.message.reply_text(response)

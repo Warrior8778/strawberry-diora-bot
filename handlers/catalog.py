@@ -279,7 +279,10 @@ async def handle_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get("checkout_step")
 
     if step == "location":
-        # Клиент написал адрес текстом вместо геолокации
+        # Сначала проверяем не ссылка ли это Google Maps
+        if await handle_maps_url(update, context):
+            return True
+        # Клиент написал адрес текстом
         context.user_data["delivery_address"] = update.message.text
         context.user_data["delivery_cost"] = None
         context.user_data["checkout_step"] = "date"
@@ -381,3 +384,51 @@ async def _finalize_order_from_callback(query, context: ContextTypes.DEFAULT_TYP
     context.user_data["delivery_distance"] = None
     context.user_data["delivery_lat"] = None
     context.user_data["delivery_lng"] = None
+
+
+async def handle_maps_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка ссылки Google Maps вместо геолокации"""
+    if not context.user_data.get("awaiting_address"):
+        return False
+    if context.user_data.get("checkout_step") != "location":
+        return False
+
+    text = update.message.text
+    from utils.delivery import is_google_maps_url, resolve_google_maps_url, get_distance_km, calculate_delivery_cost
+
+    if not is_google_maps_url(text):
+        return False
+
+    await update.message.reply_text("🔍 Обрабатываю ссылку...")
+
+    lat, lng = await resolve_google_maps_url(text)
+
+    if lat and lng:
+        distance = await get_distance_km(lat, lng)
+        if distance:
+            delivery_cost = calculate_delivery_cost(distance)
+            context.user_data["delivery_address"] = f"📍 {text}"
+            context.user_data["delivery_lat"] = lat
+            context.user_data["delivery_lng"] = lng
+            context.user_data["delivery_distance"] = distance
+            context.user_data["delivery_cost"] = delivery_cost
+
+            await update.message.reply_text(
+                f"Расстояние: {distance} км\n"
+                f"Стоимость доставки: {delivery_cost:,} Rp"
+            )
+        else:
+            context.user_data["delivery_address"] = text
+            context.user_data["delivery_cost"] = None
+            await update.message.reply_text("Не удалось рассчитать расстояние, уточним при подтверждении.")
+    else:
+        context.user_data["delivery_address"] = text
+        context.user_data["delivery_cost"] = None
+        await update.message.reply_text("Не удалось определить координаты, уточним при подтверждении.")
+
+    context.user_data["checkout_step"] = "date"
+    await update.message.reply_text(
+        "📆 Выбери дату доставки:",
+        reply_markup=date_keyboard()
+    )
+    return True
